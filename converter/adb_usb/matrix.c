@@ -234,10 +234,10 @@ detect_again:
          *        0xa0, 0xa5, 0xb0 and 0xb5 seem to work
          *        uppper nibble:
          *          0x00-70, 0xc0-f0  no movement and button event
-         *          0x80  enables mouse output    speed slow
-         *          0x90  enables mouse output
-         *          0xa0  enables mouse output
-         *          0xb0  enables mouse output    speed fast -126 to 126
+         *          0x80  enables mouse output   25% speed
+         *          0x90  enables mouse output   50% speed
+         *          0xa0  enables mouse output  100% speed
+         *          0xb0  enables mouse output  200% speed (even number x,y -126 to 126)
          *        lower nibble:
          *          0x08  makes cursor not smooth, bit4 should be 0
          *          0x02  disables button4, bit1 should be 0
@@ -269,8 +269,7 @@ detect_again:
          * byte7: 0xff  checksum  - must be 0xff before calculating
          * https://github.com/NetBSD/src/blob/8966d5b1cf335756dd9bba3331e84c659bf917e1/sys/dev/adb/adb_ktm.c#L181
          */
-        //static uint8_t cmd[] = { 0xA5, 0x14, 0x00, 0x00, 0x69, 0xFF, 0xFF, 0xFF };
-        static uint8_t cmd[] = { 0xB5, 0x14, 0x00, 0x00, 0x69, 0xFF, 0xFF, 0xFF };
+        static uint8_t cmd[] = { 0xA5, 0x14, 0x00, 0x00, 0x69, 0xFF, 0xFF, 0xFF };
         cmd[7] = cmd[0] ^ cmd[1] ^ cmd[2] ^ cmd[3] ^ cmd[4] ^ cmd[5] ^ cmd[6] ^ cmd[7];
 
         adb_host_flush(addr);
