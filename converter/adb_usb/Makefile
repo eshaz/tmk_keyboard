@@ -97,11 +97,24 @@ OPT_DEFS += -DADB_MOUSE_MAXACC=$(ADB_MOUSE_MAXACC)
 ADB_MOUSE_SCROLL_BUTTON ?= 4	# Assign the button (1-8) (0 to disable)
 ADB_MOUSE_SCROLL_SPEED ?= 10	# 1 (fastest) to 127 (slowest)
 
+
+# Speed multiplier
+# Press the assigned button to cycle through the list of speed multipliers
+#
+# The list of multipliers are separated by commas and must be positive
+# The mouse will start with the first multiplier in the list
+#   i.e. 1 = 100% (normal), .5 = 50% (slow), .25 = 25% (slower), 2 = 200% (fast)
+
+MOUSE_SPEED_MULTIPLIER_BUTTON ?= 3     # Assign the button (1-8) that cycles multipliers (0 to disable)
+MOUSE_SPEED_MULTIPLIERS ?= 1,.5,.25,2  # Assign the list of multipliers (positive comma separated numbers)
+
 # Optimize size but this may cause error "relocation truncated to fit"
 #EXTRALDFLAGS = -Wl,--relax
 
 OPT_DEFS += -DADB_MOUSE_SCROLL_BUTTON=$(ADB_MOUSE_SCROLL_BUTTON)
 OPT_DEFS += -DADB_MOUSE_SCROLL_SPEED=$(ADB_MOUSE_SCROLL_SPEED)
+OPT_DEFS += -DMOUSE_SPEED_MULTIPLIER_BUTTON=$(MOUSE_SPEED_MULTIPLIER_BUTTON)
+OPT_DEFS += -DMOUSE_SPEED_MULTIPLIERS=$(MOUSE_SPEED_MULTIPLIERS)
 
 #
 # Keymap file

@@ -292,9 +292,19 @@ detect_again:
 }
 
 static report_mouse_t mouse_report = {};
+
 static int32_t scroll_state = 0;
 static uint8_t scroll_speed = ADB_MOUSE_SCROLL_SPEED;
 static uint8_t scroll_button_mask = (1 << ADB_MOUSE_SCROLL_BUTTON) >> 1;
+
+#define FLOAT_ARRAY_FROM_LITERAL(NAME,...) static float NAME[] = {__VA_ARGS__}
+FLOAT_ARRAY_FROM_LITERAL(multipliers, MOUSE_SPEED_MULTIPLIERS);
+
+static uint8_t multiplier_idx = 0;
+static uint8_t multiplier_button_mask = (1 << MOUSE_SPEED_MULTIPLIER_BUTTON) >> 1;
+static int16_t multiplier_x = 0;
+static int16_t multiplier_y = 0;
+static bool multiplier_set = false;
 
 void adb_mouse_task(void)
 {
@@ -372,6 +382,11 @@ void adb_mouse_task(void)
     // mask out the scroll button so it isn't reported
     buttons &= ~scroll_button_mask;
 
+    // check if multiplier button is pressed
+    bool multiplier_button_pressed = (bool)(buttons & multiplier_button_mask);
+    // mask out the multiplier button
+    buttons &= ~multiplier_button_mask;
+
     mouse_report.buttons = buttons;
 
     int16_t xx, yy;
@@ -381,6 +396,42 @@ void adb_mouse_task(void)
     // Accelerate mouse. (They weren't meant to be used on screens larger than 320x200).
     x = xx * mouseacc;
     y = yy * mouseacc;
+
+    if (multiplier_button_pressed) {
+        if (multiplier_set) {
+            // only cycle through speed multipliers once per button press
+            // speed multipler is set when the button is released
+            multiplier_set = false;
+
+            // cycle through the multipliers
+            multiplier_idx++;
+            multiplier_idx %= sizeof(multipliers) / 4;
+
+            // reset speed x,y partial movement
+            multiplier_x = 0;
+            multiplier_y = 0;
+        }
+    } else {
+        multiplier_set = true;
+    }
+
+    if (multipliers[multiplier_idx] < 1) {
+        // add raw x,y movement to previous iteration's partial movement
+        multiplier_x += x;
+        multiplier_y += y;
+
+        // multiply partial movement and use truncated integer for x,y
+        x = multiplier_x * multipliers[multiplier_idx];
+        y = multiplier_y * multipliers[multiplier_idx];
+
+        // store any remainder as partial x,y movement to be added on next iteration
+        multiplier_x %= (int)(1 / multipliers[multiplier_idx]);
+        multiplier_y %= (int)(1 / multipliers[multiplier_idx]);
+    } else {
+        // ignore remainder when the multiplier is > 100%
+        x *= multipliers[multiplier_idx];
+        y *= multipliers[multiplier_idx];
+    }
 
     #ifndef MOUSE_EXT_REPORT
     x = (x > 127) ? 127 : ((x < -127) ? -127 : x);
